@@ -1,6 +1,7 @@
 define ([
-  'libraries/SCORM_API_wrapper'
-], function(pipwerks) {
+  'libraries/SCORM_API_wrapper',
+  '../moch/scorm-2004'
+], function(pipwerks, scorm2004) {
 
   /*
     IMPORTANT: This wrapper uses the Pipwerks SCORM wrapper and should therefore support both SCORM 1.2 and 2004. Ensure any changes support both versions.
@@ -502,21 +503,24 @@ define ([
     this.setValue(cmiPrefix + ".time", this.getCMITime());
   };
 
-
   ScormWrapper.prototype.recordInteractionScorm2004 = function(id, response, correct, latency, type) {
+    const cmidata = {id: id, cmiPrefix: '', response: response, correct: correct, latency: latency, type: type, description: '', weighting: ''};
+    cmidata.id = this.trim(cmidata.id);
+    scorm2004.extendInteraction(this, cmidata);
 
-    id = this.trim(id);
+    with (cmidata)
+    {
+      this.setValue(cmiPrefix + ".id", id);
+      this.setValue(cmiPrefix + ".type", type);
+      this.setValue(cmiPrefix + ".learner_response", response);
+      this.setValue(cmiPrefix + ".result", correct ? "correct" : "incorrect");
+      if (latency !== null && latency !== undefined) this.setValue(cmiPrefix + ".latency", this.convertToSCORM2004Time(latency));
+      this.setValue(cmiPrefix + ".timestamp", this.getISO8601Timestamp());
 
-    var cmiPrefix = "cmi.interactions." + this.getInteractionCount();
-
-    this.setValue(cmiPrefix + ".id", id);
-    this.setValue(cmiPrefix + ".type", type);
-    this.setValue(cmiPrefix + ".learner_response", response);
-    this.setValue(cmiPrefix + ".result", correct ? "correct" : "incorrect");
-    if (latency !== null && latency !== undefined) this.setValue(cmiPrefix + ".latency", this.convertToSCORM2004Time(latency));
-    this.setValue(cmiPrefix + ".timestamp", this.getISO8601Timestamp());
+      this.setValue(cmiPrefix + ".description", description);
+      this.setValue(cmiPrefix + ".weighting", weighting);
+    }
   };
-
 
   ScormWrapper.prototype.recordInteractionMultipleChoice = function(id, response, correct, latency, type) {
 

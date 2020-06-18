@@ -168,15 +168,69 @@
                       "validators": [],
                       "help": "If enabled, a 'commit' call will be made whenever the course window is hidden/minimised. Requires a browser that supports the 'visibilitychange' event."
                     },
+                    "_scormVersion": {
+                      "type": "string",
+                      "required": true,
+                      "default": "2004",
+                      "title": "SCORM version",
+                      "inputType": {"type": "Select", "options": ["1.2", "2004"]},
+                      "validators": ["required"],
+                      "help": "Set SCORM version."
+                    },
+                    "_scorm2004Edition": {
+                      "type": "string",
+                      "required": true,
+                      "default": "3rd Edition",
+                      "title": "SCORM 2004 edition",
+                      "inputType": {"type": "Select", "options": ["3rd Edition", "4th Edition"]},
+                      "validators": ["required"],
+                      "help": "Set SCORM 2004 edition."
+                    },
                     "_manifestIdentifier": {
                       "type": "string",
                       "required": true,
-                      "default": "adapt_manifest",
-                      "title": "Manifest identifier",
+                      "default": "*",
+                      "title": "SCORM identifier",
                       "inputType": "Text",
                       "validators": ["required"],
-                      "help": "Sets the 'identifier' attribute in the imsmanifest.xml"
+                      "help": "Main SCORM ID for the manifest file (Must start with letter. Can contain upper- and lowercase A-Z, digits 0-9, and characters: _-.). Use * to make Adapt create the ID."
                     },
+                  "_orgTitle": {
+                    "type": "string",
+                    "required": true,
+                    "title": "Organization title",
+                    "default": "MOCH Course",
+                    "inputType": "Text",
+                    "validators": [],
+                    "help": "Title of organization in manifest"
+                  },
+                  "_itemTitle": {
+                    "type": "string",
+                    "required": true,
+                    "title": "Item title",
+                    "default": "MOCH Course",
+                    "inputType": "Text",
+                    "validators": [],
+                    "help": "Title of item in manifest"
+                  },
+                  "_orgIdentifier": {
+                    "type": "string",
+                    "required": true,
+                    "title": "Organization ID",
+                    "default": "org-main_org",
+                    "inputType": "Text",
+                    "validators": ["required"],
+                    "help": "ID of organization in manifest (Must start with letter. Can contain upper- and lowercase A-Z, digits 0-9, and characters: _-.)."
+                  },
+                  "_itemIdentifier": {
+                    "type": "string",
+                    "required": true,
+                    "title": "Item ID",
+                    "default": "item-main_org",
+                    "inputType": "Text",
+                    "validators": ["required"],
+                    "help": "ID of item in manifest (Must start with letter. Can contain upper- and lowercase A-Z, digits 0-9, and characters: _-.)."
+                  },
                     "_exitStateIfIncomplete": {
                       "type": "string",
                       "required": false,
@@ -238,7 +292,25 @@
           "type":"object"
         },
         "component": {
-          "type":"object"
+          "type":"object",
+          "properties": {
+            "_spoor": {
+              "type": "object",
+              "required": false,
+              "legend": "Spoor",
+              "properties": {
+                "_interactionID": {
+                  "type": "string",
+                  "required": false,
+                  "title": "Interaction ID",
+                  "default": "",
+                  "inputType": "Text",
+                  "validators": [],
+                  "help": "ID used if component will be tracked as a SCORM interaction (usually just question components). Leave blank to use components generated component ID."
+                }
+              }
+            }
+          }
         }
       }
     }
