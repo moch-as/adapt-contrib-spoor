@@ -195,42 +195,114 @@
                       "validators": ["required"],
                       "help": "Main SCORM ID for the manifest file (Must start with letter. Can contain upper- and lowercase A-Z, digits 0-9, and characters: _-.). Use * to make Adapt create the ID."
                     },
-                  "_orgTitle": {
-                    "type": "string",
-                    "required": true,
-                    "title": "Organization title",
-                    "default": "MOCH Course",
-                    "inputType": "Text",
-                    "validators": [],
-                    "help": "Title of organization in manifest"
-                  },
-                  "_itemTitle": {
-                    "type": "string",
-                    "required": true,
-                    "title": "Item title",
-                    "default": "MOCH Course",
-                    "inputType": "Text",
-                    "validators": [],
-                    "help": "Title of item in manifest"
-                  },
-                  "_orgIdentifier": {
-                    "type": "string",
-                    "required": true,
-                    "title": "Organization ID",
-                    "default": "org-main_org",
-                    "inputType": "Text",
-                    "validators": ["required"],
-                    "help": "ID of organization in manifest (Must start with letter. Can contain upper- and lowercase A-Z, digits 0-9, and characters: _-.)."
-                  },
-                  "_itemIdentifier": {
-                    "type": "string",
-                    "required": true,
-                    "title": "Item ID",
-                    "default": "item-main_org",
-                    "inputType": "Text",
-                    "validators": ["required"],
-                    "help": "ID of item in manifest (Must start with letter. Can contain upper- and lowercase A-Z, digits 0-9, and characters: _-.)."
-                  },
+                    "_orgTitle": {
+                      "type": "string",
+                      "required": true,
+                      "title": "Organization title",
+                      "default": "MOCH Course",
+                      "inputType": "Text",
+                      "validators": [],
+                      "help": "Title of organization in manifest"
+                    },
+                    "_itemTitle": {
+                      "type": "string",
+                      "required": true,
+                      "title": "Item title",
+                      "default": "MOCH Course",
+                      "inputType": "Text",
+                      "validators": [],
+                      "help": "Title of item in manifest"
+                    },
+                    "_orgIdentifier": {
+                      "type": "string",
+                      "required": true,
+                      "title": "Organization ID",
+                      "default": "org-main_org",
+                      "inputType": "Text",
+                      "validators": ["required"],
+                      "help": "ID of organization in manifest (Must start with letter. Can contain upper- and lowercase A-Z, digits 0-9, and characters: _-.)."
+                    },
+                    "_itemIdentifier": {
+                      "type": "string",
+                      "required": true,
+                      "title": "Item ID",
+                      "default": "item-main_org",
+                      "inputType": "Text",
+                      "validators": ["required"],
+                      "help": "ID of item in manifest (Must start with letter. Can contain upper- and lowercase A-Z, digits 0-9, and characters: _-.)."
+                    },
+                    "_use2004InteractionStateTracking": {
+                      "type": "boolean",
+                      "required":true,
+                      "default": true,
+                      "title": "Use state tracking for interactions (SCORM 2004 only)",
+                      "inputType": {"type": "Boolean", "options": [true, false]},
+                      "validators": [],
+                      "help": "Use state tracking for SCORM 2004 interactions, where an interacton with an already existing ID updates the existing interaction."
+                    },
+                    "_instantCommit": {
+                      "type": "boolean",
+                      "required":true,
+                      "default": true,
+                      "title": "Call SCORM Commit immediately",
+                      "inputType": {"type": "Boolean", "options": [true, false]},
+                      "validators": [],
+                      "help": "Call SCORM Commit immediately after SCORM setValue (for interactions: commit once for all interaction data)."
+                    },
+                    "_monitorScormCommitErrors": {
+                      "type": "boolean",
+                      "required":true,
+                      "default": true,
+                      "title": "SCORM Commit error monitoring",
+                      "inputType": {"type": "Boolean", "options": [true, false]},
+                      "validators": [],
+                      "help": "Show a message if SCORM data cannot be committed to the LMS."
+                    },
+                    "_scormCommitErrorTitle": {
+                      "type": "string",
+                      "required": true,
+                      "title": "SCORM Commit error message title",
+                      "default": "SCORM Error",
+                      "inputType": "Text",
+                      "validators": [],
+                      "help": "Title of message to show if SCORM data cannot be committed to LMS"
+                    },
+                    "_scormCommitErrorMessage": {
+                      "type": "string",
+                      "required": true,
+                      "title": "SCORM Commit error message",
+                      "default": "Cannot commit data to the LMS.",
+                      "inputType": "Text",
+                      "validators": [],
+                      "help": "Message to show if SCORM data cannot be committed to LMS"
+                    },
+                    "_scormCommitErrorOnlineMessage": {
+                      "type": "string",
+                      "required": true,
+                      "title": "Browser offline message",
+                      "default": "Your browser seems to be offline.",
+                      "inputType": "Text",
+                      "validators": [],
+                      "help": "Message to show if SCORM data cannot be committed to LMS and browser reports to be offline"
+                    },
+                    "_scormCommitErrorOkButtonText": {
+                      "type": "string",
+                      "required": true,
+                      "title": "SCORM Commit error message OK button",
+                      "default": "Ok.",
+                      "inputType": "Text",
+                      "validators": [],
+                      "help": "Ok button text for SCORM Commit error message"
+                    },
+                    "_passFromStart": {
+                      "type": "boolean",
+                      "required": false,
+                      "default": false,
+                      "title": "Pass course from start",
+                      "inputType": "Checkbox",
+                      "validators": [],
+                      "help": "Select to pass course from start (eg. for demo courses that should be reset on next start, regardless of status)"
+                    },
                     "_exitStateIfIncomplete": {
                       "type": "string",
                       "required": false,

@@ -1,95 +1,59 @@
 define([
-  'core/js/adapt'
-], function (Adapt) {
+    'core/js/adapt',
+    'libraries/lz-string'
+], function (Adapt, LZString) {
 
-  //Captures the completion status of the blocks
-  //Returns and parses a '1010101' style string
+    var oldversion1 = 'ver001';
+    var version = 'ver002';
+    var versionlen = version.length;
 
-  var serializer = {
-    serialize: function () {
-      return this.serializeSaveState('_isComplete');
-    },
+    // Captures the completion status of non-question components
 
-    serializeSaveState: function(attribute) {
-      if (Adapt.course.get('_latestTrackingId') === undefined) {
-        var message = "This course is missing a latestTrackingID.\n\nPlease run the grunt process prior to deploying this module on LMS.\n\nScorm tracking will not work correctly until this is done.";
-        console.error(message);
-      }
+    var serializer = {
+        serialize: function() 
+        {
+            var savestring = this.serializeSaveState();
+            var compressed = LZString.compressToBase64(savestring);
+            return version + compressed;
+        },
 
-      var excludeAssessments = Adapt.config.get('_spoor') && Adapt.config.get('_spoor')._tracking && Adapt.config.get('_spoor')._tracking._excludeAssessments;
+        serializeSaveState: function()
+        {
+            var componentmodels = Adapt.components.filter(function(model){return model.get('_isComplete') && !model.get('_isQuestionType');});            
+            var completedIds = _.map(componentmodels, function(model){return model.get('_id');});
+            return completedIds.join(",");
+        },
 
-      // create the array to be serialised, pre-populated with dashes that represent unused tracking ids - because we'll never re-use a tracking id in the same course
-      var data = [];
-      var length = Adapt.course.get('_latestTrackingId') + 1;
-      for (var i = 0; i < length; i++) {
-        data[i] = "-";
-      }
+        deserialize: function (completion, callback)
+        {
+            var step_counter = 0;
+            var readversion = completion.slice(0, versionlen);
+            if ((readversion === version) || (readversion === oldversion1))
+            {
+                var completiondata = completion.slice(versionlen);
+                var completionstring = (readversion === version) ? LZString.decompressFromBase64(completiondata) : LZString.decompressFromUTF16(completiondata);
+                var completed_components_id_list = (completionstring !== null) ? completionstring.split(",") : [];
+                var list_length = completed_components_id_list.length;
+                step();
+            }
+            else
+            {
+                console.log('Cannot read completion status from suspend data.');
+                callback();
+            }
 
-      // now go through all the blocks, replacing the appropriate dashes with 0 (incomplete) or 1 (completed) for each of the blocks
-      _.each(Adapt.blocks.models, function(model, index) {
-        var _trackingId = model.get('_trackingId'),
-            isPartOfAssessment = model.getParent().get('_assessment'),
-            state = model.get(attribute) ? 1: 0;
-
-        if (excludeAssessments && isPartOfAssessment) {
-          state = 0;
+            function step()
+            {
+                var completed_component_id = completed_components_id_list[step_counter];
+                var completed_component = Adapt.components._byAdaptID[completed_component_id];
+                if (completed_component)
+                {
+                    completed_component[0].set('_isComplete', true);
+                }
+                (step_counter++ === list_length) ? callback() : setTimeout(step);
+            }
         }
+    };
 
-        if (_trackingId === undefined) {
-          var message = "Block '" + model.get('_id') + "' doesn't have a tracking ID assigned.\n\nPlease run the grunt process prior to deploying this module on LMS.\n\nScorm tracking will not work correctly until this is done.";
-          console.error(message);
-        } else {
-          data[_trackingId] = state;
-        }
-      }, this);
-
-      return data.join("");
-    },
-
-    deserialize: function (completion, callback) {
-      var syncIterations = 1; // number of synchronous iterations to perform
-      var i = 0, arr = this.deserializeSaveState(completion), len = arr.length;
-
-      function step() {
-        var state;
-        for (var j=0, count=Math.min(syncIterations, len-i); j < count; i++, j++) {
-          state = arr[i];
-          if (state === 1) {
-            markBlockAsComplete(Adapt.blocks.findWhere({_trackingId: i}));
-          }
-        }
-        i == len ? callback() : setTimeout(step);
-      }
-
-      function markBlockAsComplete(block) {
-        if (!block) {
-          return;
-        }
-
-        block.getChildren().each(function(child) {
-          child.set('_isComplete', true);
-        });
-      }
-
-      step();
-    },
-
-    deserializeSaveState: function (string) {
-      var completionArray = string.split("");
-
-      for (var i = 0; i < completionArray.length; i++) {
-        if (completionArray[i] === "-") {
-          completionArray[i] = -1;
-        } else {
-          completionArray[i] = parseInt(completionArray[i], 10);
-        }
-      }
-
-      return completionArray;
-    }
-
-  };
-
-  return serializer;
-
+    return serializer;
 });

@@ -5,7 +5,7 @@ define ([
     const Scorm2004 = function() {
         this.MAX_INTERACTION_DESCRIPTION_LENGTH = 250;
         this.MAX_SHORT_IDENTIFIER_LENGTH = 250;
-        this.useInteractionStateTracking = false;
+        this.scormwrapper;
     };
 
     Scorm2004.instance = null;
@@ -17,13 +17,60 @@ define ([
         return Scorm2004.instance;
     };
 
-    Scorm2004.prototype.extendInteraction = function(scormwrapper, interactionrecord)
+    Scorm2004.prototype.initialize = function(scormwrapper)
+    {
+        this.scormwrapper = scormwrapper;
+        this.scormwrapper.passFromStart && this.scormwrapper.setPassed();
+        if (Adapt.psBroker)
+        {
+            Adapt.psBroker.addStaticCommands('scorm', {commands: [{commandName: 'resetScormStatus', messageName: 'scorm.resetStatus', messageData: ''}]});
+            Adapt.psBroker.subscribe('scorm', 'scorm.resetStatus', this.onScormReset);
+        }
+    }
+
+    Scorm2004.prototype.onScormReset = function(message, msgdatastr)
+    {
+        this.scormwrapper.setIncomplete();
+        this.scormwrapper.commit();
+        this.scormwrapper.setCompleted();
+        this.scormwrapper.commit();
+    }
+
+    Scorm2004.prototype.checkForCommitError = function(_msg)
+    {    
+        if (this.scormwrapper.monitorScormCommitErrors)
+        {
+            if (isCommitError(_msg))
+            {
+                handleCommitError();
+            }
+
+            function isCommitError(_msg)
+            {
+                return (_msg.indexOf('Course could not commit data to the LMS') !== -1) || (_msg.indexOf('Course is not connected to the LMS') !== -1);
+            }
+
+            function handleCommitError()
+            {
+                var message = this.scormwrapper.scormCommitErrorMessage;
+                !navigator.onLine && (message += '\n\n' + this.scormwrapper.scormCommitErrorOnlineMessage);
+
+                Adapt.trigger("notify:prompt", {
+                    title: this.scormwrapper.scormCommitErrorTitle,
+                    body: message,
+                    _prompts: [{promptText: this.scormwrapper.scormCommitErrorOkButtonText}]
+                });
+            }
+        }
+    }
+
+    Scorm2004.prototype.extendInteraction = function(interactionrecord, usestatetracking)
     {    
         if (interactionrecord.id)
         {
             const question = Adapt.findById(interactionrecord.id);
 
-            interactionrecord.cmiPrefix = "cmi.interactions." + this._getInteractionIndex(scormwrapper, interactionrecord.id, interactionrecord.type, this.useInteractionStateTracking);
+            interactionrecord.cmiPrefix = "cmi.interactions." + this._getInteractionIndex(interactionrecord.id, interactionrecord.type, (usestatetracking || this.scormwrapper.use2004InteractionStateTracking));
             interactionrecord.description = this._getDescription(question, interactionrecord.type);
             interactionrecord.weighting = this._getWeighting(question, interactionrecord.type);
             interactionrecord.response = this._expandResponse(interactionrecord.response, question, interactionrecord.type);
@@ -32,9 +79,9 @@ define ([
         }
     };
 
-    Scorm2004.prototype._getInteractionIndex = function(scormwrapper, interactionid, interactiontype, trackstate)
+    Scorm2004.prototype._getInteractionIndex = function(interactionid, interactiontype, trackstate)
     {
-        const interactioncount = scormwrapper.getValue("cmi.interactions._count");
+        const interactioncount = this.scormwrapper.getValue("cmi.interactions._count");
         let count;
 		let resultindex = (interactioncount === "") ? 0 : (isNaN(count = parseInt(interactioncount, 10)) ? 0 : count);
 
@@ -44,10 +91,10 @@ define ([
 			{
 				for (let idx = 0; idx < resultindex; idx++)
 				{
-					const foundid = scormwrapper.getValue("cmi.interactions."+ idx + ".id");
+					const foundid = this.scormwrapper.getValue("cmi.interactions."+ idx + ".id");
 					if (foundid === interactionid)
 					{
-						const foundtype = scormwrapper.getValue("cmi.interactions." + idx + ".type");
+						const foundtype = this.scormwrapper.getValue("cmi.interactions." + idx + ".type");
 						if (foundtype === interactiontype)
 						{
 							resultindex = idx;
@@ -331,5 +378,5 @@ define ([
         return str;
     };
 
-    return new Scorm2004();
+    return Scorm2004.getInstance();
 });

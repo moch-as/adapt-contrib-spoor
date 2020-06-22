@@ -40,6 +40,26 @@ define ([
      */
     this.lastCommitSuccessTime = null;
     /**
+     * use state tracking for SCORM 2004 interactions, where an interacton with an already existing ID updates the existing interaction.
+     */
+    this.use2004InteractionStateTracking = false;
+    /**
+     * call SCORM Commit immediately after SCORM setValue (for interactions: commit once for all interaction data)
+     */
+    this.instantCommit = false;
+    /**
+     * monitor for SCORM commit errors and show warnings
+     */
+    this.monitorScormCommitErrors = false;
+    this.scormCommitErrorTitle = '';
+    this.scormCommitErrorMessage = '';
+    this.scormCommitErrorOnlineMessage = '';
+    this.scormCommitErrorOkButtonText = '';
+    /**
+     * pass course from start (eg. for demo courses that should be reset on next start, regardless of status)
+     */
+    this.passFromStart = false;
+    /**
      * The exit state to use when course isn't completed yet
      */
     this.exitStateIfIncomplete = "auto";
@@ -109,6 +129,8 @@ define ([
       this.handleError("Course could not connect to the LMS");
     }
 
+    scorm2004.initialize(this);
+    
     return this.lmsConnected;
   };
 
@@ -328,7 +350,7 @@ define ([
     }
   };
 
-  ScormWrapper.prototype.recordInteraction = function(id, response, correct, latency, type) {
+  ScormWrapper.prototype.recordInteraction = function(id, response, correct, latency, type, usestatetracking) {
     if(this.isSupported("cmi.interactions._count")) {
       switch(type) {
         case "choice":
@@ -347,9 +369,16 @@ define ([
           this.recordInteractionFillIn.apply(this, arguments);
           break;
 
+        case "long-fill-in":
+          this.recordInteractionLongFillIn.apply(this, arguments);
+          break;
+  
         default:
           console.error("ScormWrapper.recordInteraction: unknown interaction type of '" + type + "' encountered...");
       }
+
+      this.instantCommit && this.commit();
+
     }
     else {
       this.logger.info("ScormWrapper::recordInteraction: cmi.interactions are not supported by this LMS...");
@@ -419,6 +448,10 @@ define ([
           this.logger.warn("ScormWrapper::setValue: LMS reported that the 'set' call failed but then said there was no error!");
         }
       }
+      else if (this.instantCommit && (_property.toLowerCase().indexOf('.interactions.') === -1))
+      {
+        this.commit();
+      }
 
       return _success;
     }
@@ -482,6 +515,8 @@ define ([
 
     if (!this.suppressErrors && (!this.logOutputWin || this.logOutputWin.closed) && confirm("An error has occured:\n\n" + _msg + "\n\nPress 'OK' to view debug information to send to technical support."))
         this.showDebugWindow();
+
+    scorm2004.checkForCommitError(_msg);
   };
 
   ScormWrapper.prototype.getInteractionCount = function(){
@@ -503,10 +538,10 @@ define ([
     this.setValue(cmiPrefix + ".time", this.getCMITime());
   };
 
-  ScormWrapper.prototype.recordInteractionScorm2004 = function(id, response, correct, latency, type) {
+  ScormWrapper.prototype.recordInteractionScorm2004 = function(id, response, correct, latency, type, usestatetracking) {
     const cmidata = {id: id, cmiPrefix: '', response: response, correct: correct, latency: latency, type: type, description: '', weighting: ''};
     cmidata.id = this.trim(cmidata.id);
-    scorm2004.extendInteraction(this, cmidata);
+    scorm2004.extendInteraction(cmidata, usestatetracking);
 
     with (cmidata)
     {
@@ -567,6 +602,21 @@ define ([
     var scormRecordInteraction = this.isSCORM2004() ? this.recordInteractionScorm2004 : this.recordInteractionScorm12;
 
     scormRecordInteraction.call(this, id, response, correct, latency, type);
+  };
+
+  ScormWrapper.prototype.recordInteractionLongFillIn = function(id, response, correct, latency, type) {
+    if (this.isSCORM2004())
+    {
+      const maxLength = 4000;
+
+      if (response.length > maxLength)
+      {
+        response = response.substr(0, maxLength);
+        this.logger.warn("ScormWrapper::recordInteractionLongFillIn: response data for " + id + " is longer than the maximum allowed length of " + maxLength + " characters; data will be truncated to avoid an error.");
+      }
+
+      this.recordInteractionScorm2004(id, response, correct, latency, type);
+    }
   };
 
   ScormWrapper.prototype.showDebugWindow = function() {

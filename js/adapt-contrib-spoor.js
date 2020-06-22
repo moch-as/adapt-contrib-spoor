@@ -79,6 +79,38 @@ define([
           scorm.commitRetryDelay = settings._commitRetryDelay;
         }
 
+        if (settings._use2004InteractionStateTracking) {
+          scorm.use2004InteractionStateTracking = settings._use2004InteractionStateTracking;
+        }
+        
+        if (settings._instantCommit) {
+          scorm.instantCommit = settings._instantCommit;
+        }
+        
+        if (settings._monitorScormCommitErrors) {
+          scorm.monitorScormCommitErrors = settings._monitorScormCommitErrors;
+        }
+        
+        if (settings._scormCommitErrorTitle) {
+          scorm.scormCommitErrorTitle = settings._scormCommitErrorTitle;
+        }
+        
+        if (settings._scormCommitErrorMessage) {
+          scorm.scormCommitErrorMessage = settings._scormCommitErrorMessage;
+        }
+        
+        if (settings._scormCommitErrorOnlineMessage) {
+          scorm.scormCommitErrorOnlineMessage = settings._scormCommitErrorOnlineMessage;
+        }
+        
+        if (settings._scormCommitErrorOkButtonText) {
+          scorm.scormCommitErrorOkButtonText = settings._scormCommitErrorOkButtonText;
+        }
+
+        if (settings._passFromStart) {
+          scorm.passFromStart = settings._commitRetryDelay;
+        }
+
         if ("_exitStateIfIncomplete" in settings) {
           scorm.exitStateIfIncomplete = settings._exitStateIfIncomplete;
         }
