@@ -1,7 +1,8 @@
 define([
   'libraries/SCORM_API_wrapper',
-  './logger'
-], function(pipwerks, Logger) {
+  './logger',
+  'moch/scorm-2004'
+], function(pipwerks, Logger, scorm2004) {
 
   /**
    * IMPORTANT: This wrapper uses the Pipwerks SCORM wrapper and should therefore support both SCORM 1.2 and 2004. Ensure any changes support both versions.
@@ -44,6 +45,26 @@ define([
        * not currently used - but you could include in an error message to show when data was last saved
        */
       this.lastCommitSuccessTime = null;
+      /**
+       * use state tracking for SCORM 2004 interactions, where an interacton with an already existing ID updates the existing interaction.
+       */
+      this.use2004InteractionStateTracking = false;
+      /**
+       * call SCORM Commit immediately after SCORM setValue (for interactions: commit once for all interaction data)
+       */
+      this.instantCommit = false;
+      /**
+       * monitor for SCORM commit errors and show warnings
+       */
+      this.monitorScormCommitErrors = false;
+      this.scormCommitErrorTitle = '';
+      this.scormCommitErrorMessage = '';
+      this.scormCommitErrorOnlineMessage = '';
+      this.scormCommitErrorOkButtonText = '';
+      /**
+       * pass course from start (eg. for demo courses that should be reset on next start, regardless of status)
+       */
+      this.passFromStart = false;
       /**
        * The exit state to use when course isn't completed yet
        */
@@ -110,7 +131,7 @@ define([
       } else {
         this.handleError('Course could not connect to the LMS');
       }
-
+      scorm2004.initialize(this);
       return this.lmsConnected;
     }
 
@@ -499,18 +520,21 @@ define([
       this.setValue(`${cmiPrefix}.time`, this.getCMITime());
     }
 
-    recordInteractionScorm2004(id, response, correct, latency, type) {
-
+    recordInteractionScorm2004(id, response, correct, latency, type, usestatetracking) {
       id = this.trim(id);
-
-      const cmiPrefix = `cmi.interactions.${this.getInteractionCount()}`;
-
-      this.setValue(`${cmiPrefix}.id`, id);
-      this.setValue(`${cmiPrefix}.type`, type);
-      this.setValue(`${cmiPrefix}.learner_response`, response);
-      this.setValue(`${cmiPrefix}.result`, correct ? 'correct' : 'incorrect');
-      if (latency !== null && latency !== undefined) this.setValue(`${cmiPrefix}.latency`, this.convertToSCORM2004Time(latency));
-      this.setValue(`${cmiPrefix}.timestamp`, this.getISO8601Timestamp());
+      const cmidata = {id: id, cmiPrefix: '', response: response, correct: correct, latency: latency, type: type, description: '', weighting: ''};
+      cmidata.id = this.trim(cmidata.id);
+      scorm2004.extendInteraction(cmidata, usestatetracking);
+      with (cmidata) {
+        this.setValue(`${cmiPrefix}.id`, id);
+        this.setValue(`${cmiPrefix}.type`, type);
+        this.setValue(`${cmiPrefix}.learner_response`, response);
+        this.setValue(`${cmiPrefix}.result`, correct ? 'correct' : 'incorrect');
+        if (latency !== null && latency !== undefined) this.setValue(`${cmiPrefix}.latency`, this.convertToSCORM2004Time(latency));
+        this.setValue(`${cmiPrefix}.timestamp`, this.getISO8601Timestamp());
+        this.setValue(`${cmiPrefix}.description`, description);
+        this.setValue(`${cmiPrefix}.weighting`, weighting);
+      }
     }
 
     recordInteractionMultipleChoice(id, response, correct, latency, type) {
@@ -556,6 +580,21 @@ define([
       const scormRecordInteraction = this.isSCORM2004() ? this.recordInteractionScorm2004 : this.recordInteractionScorm12;
 
       scormRecordInteraction.call(this, id, response, correct, latency, type);
+    }
+
+    ScormWrapper.prototype.recordInteractionLongFillIn = function(id, response, correct, latency, type) {
+      if (this.isSCORM2004())
+      {
+        const maxLength = 4000;
+
+        if (response.length > maxLength)
+        {
+          response = response.substr(0, maxLength);
+          this.logger.warn(`ScormWrapper::recordInteractionLongFillIn: response data for ${id} is longer than the maximum allowed length of " + maxLength + " characters; data will be truncated to avoid an error.`);
+        }
+
+        this.recordInteractionScorm2004(id, response, correct, latency, type);
+      }
     }
 
     showDebugWindow() {
