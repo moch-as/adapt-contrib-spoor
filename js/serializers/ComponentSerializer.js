@@ -12,10 +12,10 @@ define([
     serialize() {
       const states = [];
       Adapt.data.each(model => {
-        if (model.get('_type') !== this.trackingIdType) {
+        if (model.get('_type') !== 'component') {//if (model.get('_type') !== this.trackingIdType) {
           return;
         }
-        const trackingId = model.get('_trackingId');
+        const trackingId = model.get('_id');//model.get('_trackingId');
         if (typeof trackingId === 'undefined') {
           return;
         }
@@ -74,9 +74,10 @@ define([
           } else {
             modelState[2][1] = attemptStates;
           }
+          const [trackingId1, trackingId2, trackingId3, trackingId4] = [parseInt(trackingId.substr(0, 6), 16), parseInt(trackingId.substr(6, 6), 16), parseInt(trackingId.substr(12, 6), 16), parseInt(trackingId.substr(18, 6), 16)];
           // create the restoration state object
           const state = [
-            [ trackingId, index ],
+            [ trackingId1, trackingId2, trackingId3, trackingId4 , index ],//[ trackingId, index ],
             [ hasUserAnswer, isUserAnswerArray, hasAttemptStates ],
             modelState
           ];
@@ -88,16 +89,17 @@ define([
 
     deserialize(binary) {
       const trackingIdMap = Adapt.data.toArray().reduce((trackingIdMap, model) => {
-        const trackingId = model.get('_trackingId');
+        const trackingId = model.get('_id');//model.get('_trackingId');
         if (typeof trackingId === 'undefined') return trackingIdMap;
         trackingIdMap[trackingId] = model;
         return trackingIdMap;
       }, {});
       const states = SCORMSuspendData.deserialize(binary);
       states.forEach(state => {
-        const [ trackingId, index ] = state[0];
+        const [ trackingId1, trackingId2, trackingId3, trackingId4, index ] = state[0];//const [ trackingId, index ] = state[0];
         const [ hasUserAnswer, isUserAnswerArray, hasAttemptStates ] = state[1];
         const modelState = state[2];
+        const trackingId = trackingId1.toString(16) + trackingId2.toString(16) + trackingId3.toString(16) + trackingId4.toString(16);
         // correct useranswer
         if (!hasUserAnswer) {
           modelState[2][0] = null;

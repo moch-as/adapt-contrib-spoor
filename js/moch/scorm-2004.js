@@ -32,8 +32,6 @@ define ([
     {
         this.scormwrapper.setIncomplete();
         this.scormwrapper.commit();
-        this.scormwrapper.setCompleted();
-        this.scormwrapper.commit();
     }
 
     Scorm2004.prototype.checkForCommitError = function(_msg)

@@ -258,15 +258,6 @@
                       "validators": [],
                       "help": "Use state tracking for SCORM 2004 interactions, where an interacton with an already existing ID updates the existing interaction."
                     },
-                    "_instantCommit": {
-                      "type": "boolean",
-                      "required":true,
-                      "default": true,
-                      "title": "Call SCORM Commit immediately",
-                      "inputType": {"type": "Boolean", "options": [true, false]},
-                      "validators": [],
-                      "help": "Call SCORM Commit immediately after SCORM setValue (for interactions: commit once for all interaction data)."
-                    },
                     "_monitorScormCommitErrors": {
                       "type": "boolean",
                       "required":true,
