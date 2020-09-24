@@ -32,7 +32,6 @@ define([
        * time (in milliseconds) to wait between retries
        */
       this.commitRetryDelay = 1000;
-
       /**
        * prevents commit from being called if there's already a 'commit retry' pending.
        */
@@ -45,6 +44,7 @@ define([
        * not currently used - but you could include in an error message to show when data was last saved
        */
       this.lastCommitSuccessTime = null;
+      // MOCH start
       /**
       * use state tracking for SCORM 2004 interactions, where an interacton with an already existing ID updates the existing interaction.
       */
@@ -64,6 +64,7 @@ define([
       /**
        * The exit state to use when course isn't completed yet
        */
+      // MOCH end
       this.exitStateIfIncomplete = 'auto';
       /**
        * The exit state to use when the course has been completed/passed

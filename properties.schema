@@ -76,7 +76,7 @@
                     "_onTrackingCriteriaMet": {
                       "type":"string",
                       "required":true,
-                      "default": "completed",
+                      "default": "passed",
                       "title":"Tracking success status",
                       "enum": ["completed", "passed", "failed", "incomplete"],
                       "inputType": {

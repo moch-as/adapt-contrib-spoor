@@ -67,7 +67,7 @@ define([
       if (_.isFinite(settings._commitRetryDelay)) {
         this.scorm.commitRetryDelay = settings._commitRetryDelay;
       }
-
+      // MOCH start
       if (settings._use2004InteractionStateTracking) {
         this.scorm.use2004InteractionStateTracking = settings._use2004InteractionStateTracking;
       }
@@ -89,7 +89,7 @@ define([
       if (settings._passFromStart) { // NOT YET IMPLEMENTED
         this.scorm.passFromStart = settings._passFromStart;
       }
-
+      // MOCH end
       if ('_exitStateIfIncomplete' in settings) {
         this.scorm.exitStateIfIncomplete = settings._exitStateIfIncomplete;
       }

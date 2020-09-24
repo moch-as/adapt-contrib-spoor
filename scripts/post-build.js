@@ -11,15 +11,15 @@ module.exports = function(fs, path, log, options, done) {
         if (getScormConfigItem(configcontent, '_spoor', '_isEnabled'))
         {
             // SCORM version
-            const scormversion = getScormConfigItem(configcontent._advancedSettings, '_spoor', '_scormVersion') || '2004';
-            const scormedition = (scormversion !== '1.2') ? (getScormConfigItem(configcontent._advancedSettings, '_spoor', '_scorm2004Edition') || '3rd Edition') : '';
+            const scormversion = getScormConfigItem(configcontent._spoor, '_advancedSettings', '_scormVersion') || '2004';
+            const scormedition = (scormversion !== '1.2') ? (getScormConfigItem(configcontent._spoor, '_advancedSettings', '_scorm2004Edition') || '3rd Edition') : '';
 
             // Manifest values
-            let manifestScormId = getScormConfigItem(configcontent._advancedSettings, '_spoor', '_manifestIdentifier') || '*';
-            const manifestOrganizationId = getScormConfigItem(configcontent._advancedSettings, '_spoor', '_orgIdentifier') || 'org-main_org';
-            const manifestItemId = getScormConfigItem(configcontent._advancedSettings, '_spoor', '_itemIdentifier') || 'item-main_org';
-            const manifestOrganizationTitle = getScormConfigItem(configcontent._advancedSettings, '_spoor', '_orgTitle') || 'MOCH Course';
-            const manifestItemTitle = getScormConfigItem(configcontent._advancedSettings, '_spoor', '_itemTitle') || 'MOCH Course';
+            let manifestScormId = getScormConfigItem(configcontent._spoor, '_advancedSettings', '_manifestIdentifier') || '*';
+            const manifestOrganizationId = getScormConfigItem(configcontent._spoor, '_advancedSettings', '_orgIdentifier') || 'org-main_org';
+            const manifestItemId = getScormConfigItem(configcontent._spoor, '_advancedSettings', '_itemIdentifier') || 'item-main_org';
+            const manifestOrganizationTitle = getScormConfigItem(configcontent._spoor, '_advancedSettings', '_orgTitle') || 'MOCH Course';
+            const manifestItemTitle = getScormConfigItem(configcontent._spoor, '_advancedSettings', '_itemTitle') || 'MOCH Course';
 
             // Use course ID as SCORM ID if ID is empty or *
             if ((!manifestScormId) || (manifestScormId === '*'))
@@ -32,6 +32,7 @@ module.exports = function(fs, path, log, options, done) {
             for (const name in scormfolders) {
                 (name != scormversionname) && deleteSourceFilesInTarget(fs, path, path.join(scriptsourcefolder, scormfolders[name]), targetfolder);
             }
+
             copyDirs(log, fs, path, path.join(scriptsourcefolder, scormfolders[scormversionname]), targetfolder);
 
             // Fill in manifest file
