@@ -9,7 +9,10 @@ define([
       this.trackingIdType = trackingIdType;
     }
 
-    serialize() {
+    serialize(shouldStoreResponses, shouldStoreAttempts) {
+      if (shouldStoreAttempts && !shouldStoreResponses) {
+        Adapt.log.warnOnce(`SPOOR configuration error, cannot use '_shouldStoreAttempts' without '_shouldStoreResponses'`);
+      }
       const states = [];
       Adapt.data.each(model => {
         if (model.get('_type') !== 'component') {//if (model.get('_type') !== this.trackingIdType) {
@@ -24,9 +27,18 @@ define([
           model.findDescendantModels('component') :
           [model];
         components.forEach((component, index) => {
+          if (!shouldStoreResponses) {
+            // Store only component completion
+            const state = [
+              [ trackingId, index ],
+              [ component.get('_isComplete') ]
+            ];
+            states.push(state);
+            return;
+          }
           let modelState = null;
           if (!component.getAttemptState) {
-            // Legacy components without getAttemptState
+            // Legacy components without getAttemptState API
             modelState = component.get('_isQuestionType') ?
               [
                 [
@@ -56,7 +68,7 @@ define([
           } else {
             modelState = component.getAttemptState();
           }
-          // correct the useranswer array as it is sometimes not an array
+          // Correct the _userAnswer array as it is sometimes not an array
           // incomplete components are undefined and slider is a number
           const userAnswer = modelState[2][0];
           const hasUserAnswer = typeof userAnswer !== 'undefined' && userAnswer !== null;
@@ -66,17 +78,14 @@ define([
           } else if (!isUserAnswerArray) {
             modelState[2][0] = [modelState[2][0]];
           }
-          // attemptstates is empty if not a question or not attempted
+          // _attemptStates is empty if not a question or not attempted
           const attemptStates = component.get('_attemptStates');
-          const hasAttemptStates = Array.isArray(attemptStates);
-          if (!hasAttemptStates) {
-            modelState[2][1] = [];
-          } else {
+          const hasAttemptStates = shouldStoreAttempts && Array.isArray(attemptStates);
+          if (hasAttemptStates) {
             modelState[2][1] = attemptStates;
           }
-          const [trackingId1, trackingId2, trackingId3, trackingId4] = [parseInt(trackingId.substr(0, 6), 16), parseInt(trackingId.substr(6, 6), 16), parseInt(trackingId.substr(12, 6), 16), parseInt(trackingId.substr(18, 6), 16)];
-          // create the restoration state object
-          const state = [
+const [trackingId1, trackingId2, trackingId3, trackingId4] = [parseInt(trackingId.substr(0, 6), 16), parseInt(trackingId.substr(6, 6), 16), parseInt(trackingId.substr(12, 6), 16), parseInt(trackingId.substr(18, 6), 16)];
+          // create the restoration state object          const state = [
             [ trackingId1, trackingId2, trackingId3, trackingId4 , index ],//[ trackingId, index ],
             [ hasUserAnswer, isUserAnswerArray, hasAttemptStates ],
             modelState
@@ -88,6 +97,7 @@ define([
     }
 
     deserialize(binary) {
+      // Build a table of models and their tracking ids
       const trackingIdMap = Adapt.data.toArray().reduce((trackingIdMap, model) => {
         const trackingId = model.get('_id');//model.get('_trackingId');
         if (typeof trackingId === 'undefined') return trackingIdMap;
@@ -95,28 +105,42 @@ define([
         return trackingIdMap;
       }, {});
       const states = SCORMSuspendData.deserialize(binary);
+      // Derive the storage settings of the data from the states array, this will allow changes
+      // in the spoor configuration for _shouldStoreResponses and _shouldStoreAttempts
+      // to be non-breaking
+      const shouldStoreResponses = (states[0].length > 2);
       states.forEach(state => {
         const [ trackingId1, trackingId2, trackingId3, trackingId4, index ] = state[0];//const [ trackingId, index ] = state[0];
-        const [ hasUserAnswer, isUserAnswerArray, hasAttemptStates ] = state[1];
-        const modelState = state[2];
-        const trackingId = trackingId1.toString(16) + trackingId2.toString(16) + trackingId3.toString(16) + trackingId4.toString(16);
-        // correct useranswer
-        if (!hasUserAnswer) {
-          modelState[2][0] = null;
-        } else if (!isUserAnswerArray) {
-          modelState[2][0] = modelState[2][0][0];
-        }
-        // allow empty attemptstates
-        if (!hasAttemptStates) {
-          modelState[2][1] = null;
-        }
         const model = trackingIdMap[trackingId];
+        if (!model) {
+          // Ignore any recently missing tracking ids if a course has been updated
+          return;
+        }
         const isContainer = model.hasManagedChildren;
         const components = isContainer ?
           model.findDescendantModels('component') :
           [model];
         const component = components[index];
+        if (!shouldStoreResponses) {
+          // Restore only component completion
+          const isComplete = state[1][0];
+          component.set('_isComplete', isComplete);
+          return;
+        }
+        const [ hasUserAnswer, isUserAnswerArray, hasAttemptStates ] = state[1];
+        const modelState = state[2];
+        // Correct the _userAnswer value if it wasn't an array originally
+		const trackingId = trackingId1.toString(16) + trackingId2.toString(16) + trackingId3.toString(16) + trackingId4.toString(16);        if (!hasUserAnswer) {
+          modelState[2][0] = null;
+        } else if (!isUserAnswerArray) {
+          modelState[2][0] = modelState[2][0][0];
+        }
+        // Allow empty _attemptStates
+        if (!hasAttemptStates) {
+          modelState[2][1] = null;
+        }
         if (component.setAttemptObject) {
+          // Restore component state with setAttemptObject API
           component.set('_attemptStates', modelState[2][1]);
           const attemptObject = component.getAttemptObject(modelState);
           component.setAttemptObject(attemptObject, false);
