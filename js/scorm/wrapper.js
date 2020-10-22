@@ -2,12 +2,9 @@ define([
   'core/js/adapt',
   'libraries/SCORM_API_wrapper',
   './logger',
-<<<<<<< HEAD
+  './error',
   '../moch/scorm-2004'
-], function(pipwerks, Logger, scorm2004) {
-=======
-  './error'
-], function(Adapt, pipwerks, Logger, ScormError) {
+], function(Adapt, pipwerks, Logger, ScormError, scorm2004) {
 
   const {
     CLIENT_COULD_NOT_CONNECT,
@@ -20,7 +17,6 @@ define([
     CLIENT_COULD_NOT_SET_PROPERTY,
     CLIENT_INVALID_CHOICE_VALUE
   } = ScormError;
->>>>>>> 80867e31fd933ca25a2dc1a1cd8205c723df4988
 
   /**
    * IMPORTANT: This wrapper uses the Pipwerks SCORM wrapper and should therefore support both SCORM 1.2 and 2004. Ensure any changes support both versions.
