@@ -85,7 +85,8 @@ define([
             modelState[2][1] = attemptStates;
           }
 const [trackingId1, trackingId2, trackingId3, trackingId4] = [parseInt(trackingId.substr(0, 6), 16), parseInt(trackingId.substr(6, 6), 16), parseInt(trackingId.substr(12, 6), 16), parseInt(trackingId.substr(18, 6), 16)];
-          // create the restoration state object          const state = [
+          // create the restoration state object
+          const state = [
             [ trackingId1, trackingId2, trackingId3, trackingId4 , index ],//[ trackingId, index ],
             [ hasUserAnswer, isUserAnswerArray, hasAttemptStates ],
             modelState
